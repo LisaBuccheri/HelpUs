@@ -1,0 +1,325 @@
+<html>
+
+<head>
+    <script src="phaser.min.js"></script>
+</head>
+
+<body>
+    <script type="text/javascript">
+        window.onload = function() {
+            var game = new Phaser.Game(1200, 800, Phaser.AUTO, '', {
+                preload: preload,
+                create: create,
+                update: update
+            });
+
+            var player, cursors, sac, bouteille, poisson, tortue;
+            var sacs, poissons, bouteilles, tortues, left, right, scores, scoreText, texte;
+            var boutonJouer, boutonQuitter, state;
+
+            function preload() {
+                game.load.image('bg', 'AccueilOriginFR.png');
+
+                //game.load.spritesheet('fond', 'backgroundAnim.png', 1200, 800, 2);
+                game.load.image('fond', 'backgroundSc.png', 1200, 800);
+
+                game.load.spritesheet('player', 'joueurMoveInk.png', 42, 104, 3);
+                game.load.image('sacs', 'sacPlastiqueInk.png');
+                game.load.spritesheet('bouteilles', 'bouteillesInk.png', 13, 32, 2);
+                game.load.image('gameover', 'GameOverFR.png');
+                game.load.image('win', 'WinFR.png');
+                //animation
+                game.load.spritesheet('poissons', 'poissonAnimInk.png', 19, 43, 2);
+                game.load.spritesheet('tortue', 'tortueAnimInk.png', 82.3, 90, 2);
+                //son
+                game.load.audio('eau', 'bruitEau.mp3');
+                game.load.audio('epuisette', 'bruitEpui.mp3');
+                game.load.audio('poissonBruit', 'bruitPoisson.mp3');
+
+            }
+
+            function create() {
+                game.scale.pageAlignHorizontally = true;
+                game.add.sprite(0, 0, 'bg');
+                game.world.setBounds(0, 0, 1200, 800);
+                state = 0;
+                play = {
+                    font: "bold 36px Arial",
+                    fill: "#0076ff",
+                    boundsAlignH: "center",
+                    boundsAlignV: "middle"
+                };
+                boutonJouer = game.add.text(600, 710, "Jouer", play);
+                boutonJouer.inputEnabled = true;
+
+                //boutonJouer.events.onInputOver.add(over, this);
+                boutonJouer.events.onInputDown.add(down, this);
+
+                sonEau = game.add.audio('eau');
+                sonEpui = game.add.audio('epuisette');
+                sonPoisson = game.add.audio('poissonBruit');
+
+                sonEau.loopFull(0.2);
+
+            }
+
+            function update() {
+                switch (state) {
+
+                    case 1:
+                        game.camera.y = 100;
+                        ecranJeu.tilePosition.y -= 1.2;
+                        texte.setText("Score : " + scores);
+                        player.body.velocity.x = 0;
+                        player.body.velocity.y = 0;
+
+                        if (cursors.left.isDown) {
+                            player.body.velocity.x = -300;
+                            player.animations.add('animPlayer', [2]);
+                            player.play('animPlayer', 1, false);
+                            //Animatiojns joueur
+                            //player.play('left');
+                        } else if (cursors.right.isDown) {
+                            player.body.velocity.x = 300;
+                            player.animations.add('animPlayer', [0]);
+                            player.play('animPlayer', 1, false);
+                            //Animations joueur
+                            //player.play('right');
+                        } else {
+                            player.animations.add('animPlayer', [1]);
+                            player.play('animPlayer', 1, false);
+                            //player.animations.stop();
+                        }
+
+                        if (scores >= 200) {
+                            win();
+                        }
+
+                        if (scores < 0) {
+                            lose();
+                        }
+                        game.physics.arcade.collide(player, sacs, collisionPlayerSac, null, this);
+                        game.physics.arcade.collide(player, bouteilles, collisionPlayerBouteilles, null, this);
+                        game.physics.arcade.collide(player, poissons, collisionPoissonPlayer, null, this);
+                        game.physics.arcade.collide(player, tortues, collisionTortuePlayer, null, this);
+                        break;
+
+                    case 2:
+                        break;
+
+                    case 3:
+                        break;
+                }
+            }
+
+            function createGame() {
+                game.world.removeAll();
+
+                ecranJeu = game.add.tileSprite(0, 0, 1200, 800, 'fond'); //game.add.sprite(0, 0, 'fond');         
+
+                player = game.add.sprite(650, 650, 'player');
+                player.enableBody = true;
+                game.physics.arcade.enable(player);
+                game.physics.setBoundsToWorld();
+
+
+                sacs = game.add.group();
+                sacs.enableBody = true; //enable body, activer le corps 
+                sacs.physicsBodyType = Phaser.Physics.ARCADE;
+                sacs.createMultiple(25, 'sacs');
+
+                bouteilles = game.add.group();
+                bouteilles.enableBody = true; //enable body, activer le corps 
+                bouteilles.physicsBodyType = Phaser.Physics.ARCADE;
+                bouteilles.createMultiple(25, 'bouteilles');
+
+                poissons = game.add.group();
+                poissons.enableBody = true;
+                poissons.physicsBodyType = Phaser.Physics.ARCADE;
+                poissons.createMultiple(25, 'poissons');
+
+                tortues = game.add.group();
+                tortues.enableBody = true;
+                tortues.physicsBodyType = Phaser.Physics.ARCADE;
+                tortues.createMultiple(25, 'tortue');
+
+                //1er nombre, combien de temps attendre avant que l'event se lance, 2e nombre, combien de temps l'event va se jouer au total 
+                game.time.events.repeat(Phaser.Timer.SECOND * 4, 35, spawnSac, this);
+                game.time.events.repeat(Phaser.Timer.SECOND * 6, 35, spawnPoisson, this);
+
+                cursors = game.input.keyboard.createCursorKeys();
+                scores = 0;
+                scoreText = {
+                    font: "bold 16px Arial",
+                    fill: "#fff",
+                    boundsAlignH: "left",
+                    boundsAlignV: "up"
+                };
+
+                texte = game.add.text(0, 0, "Score : ", scoreText);
+            }
+
+            function spawnSac() {
+                sac = sacs.getFirstExists(false);
+                if (sac) {
+                    sac.alpha = game.rnd.between(2, 9) / 10;
+                    //sac.animations.add('animsac', [0, 1]);
+                    //sac.play('animsac', 1, true);
+                    sac.reset(Math.random() * 1100, 0);
+                    sac.body.velocity.y = 50 + Math.random() * 40;
+                }
+
+                bouteille = bouteilles.getFirstExists(false);
+                if (bouteille) {
+                    bouteille.alpha = game.rnd.between(4, 9) / 10;
+                    bouteille.animations.add('animbouteille', [0, 1]);
+                    bouteille.play('animbouteille', 1, true);
+                    bouteille.reset(Math.random() * 1100, 0);
+                    bouteille.body.velocity.y = 60 + Math.random() * 40;
+                }
+            }
+
+            function spawnPoisson() {
+                poisson = poissons.getFirstExists(false);
+                if (poisson) {
+                    poisson.alpha = game.rnd.between(2, 7) / 10;
+                    poisson.animations.add('animpoisson', [0, 1]);
+                    poisson.play('animpoisson', 1, true);
+                    poisson.reset(Math.random() * 1100, 0);
+                    poisson.body.velocity.y = 50 + Math.random() * 40;
+                }
+
+                tortue = tortues.getFirstExists(false);
+                if (tortue) {
+                    tortue.alpha = game.rnd.between(4, 7) / 10;
+                    tortue.animations.add('animtortue', [0, 1]);
+                    tortue.play('animtortue', 1, true);
+                    tortue.reset(Math.random() * 1100, 0);
+                    tortue.body.velocity.y = 50 + Math.random() * 40;
+                }
+            }
+
+            function collisionPlayerSac(_player, _sac) {
+                _sac.kill();
+                sonEpui.play();
+                scores = scores + 10;
+            }
+
+            function collisionPlayerBouteilles(_player, _bouteille) {
+                _bouteille.kill();
+                sonEpui.play();
+                scores = scores + 5;
+            }
+
+            function collisionPoissonPlayer(_player, _poisson) {
+                _poisson.kill();
+                sonPoisson.play();
+                scores = scores - 2;
+            }
+
+            function collisionTortuePlayer(_player, _tortue) {
+                _tortue.kill();
+                sonPoisson.play();
+                scores = scores - 5;
+            }
+
+            function over(texte) {
+                boutonJouer.fill = "#0ac6ff";
+            }
+
+            
+            function out(texte) {
+                boutonJouer.fill = "#0076ff";
+            } 
+            
+            
+            function down() {
+                createGame();
+                state = 1;
+            }
+            
+            
+            /*Test Exit
+            function outQuit(texte) {
+                boutonQuitter.fill = "#0076ff";
+            }
+            
+            function overQuit(texte) {
+                boutonQuitter.fill = "#0ac6ff";
+            }
+            
+            function downOut() {
+                exit();
+            }*/
+
+            function win() {
+                /*gagner = {
+                        font: "bold 36px Arial",
+                        fill: "#fff",
+                        boundsAlignH: "center",
+                        boundsAlignV: "middle"
+                        };*/
+                game.add.sprite(0, 0, 'win');
+                recommencer = {
+                    font: "bold 24px Arial",
+                    fill: "#0076ff",
+                    boundsAlignH: "center",
+                    boundsAlignV: "middle"
+                };
+                boutonJouer = game.add.text(510, 400, "Recommencer", recommencer);
+                //Gagner = game.add.text(600, 680, "Gagner", gagner);
+                boutonJouer.inputEnabled = true;
+                boutonJouer.events.onInputOver.add(over, this);
+                boutonJouer.events.onInputOut.add(out, this);
+                boutonJouer.events.onInputDown.add(down, this);
+                state = 2;
+                
+                /*Test Quit
+                quitter = {
+                    font: "bold 24px Arial",
+                    fill: "#0076ff",
+                    boundsAlignH: "center",
+                    boundsAlignV: "middle",
+                };
+                boutonQuitter = game.add.text(560, 450, "Quitter", quitter);
+                boutonQuitter.inputEnabled = true;
+                boutonQuitter.events.onInputOver.add(overQuit, this);
+                boutonQuitter.events.onInputOut.add(outQuit, this);
+                boutonQuitter.events.onInputDown.add(downOut, this);
+                */
+            }
+
+            function lose() {
+                /* gameOver = {
+                         font: "bold 36px Arial",
+                         fill: "#fff",
+                         boundsAlignH: "center",
+                         boundsAlignV: "middle"
+                         };*/
+                game.add.sprite(0, 0, 'gameover');
+                recommencer = {
+                    font: "bold 24px Arial",
+                    fill: "#fff",
+                    boundsAlignH: "center",
+                    boundsAlignV: "middle"
+                };
+
+                //titre = game.add.text(340, 140, "Perdu...", gameOver);
+                texte = game.add.text(490, 400, "Recommencer", recommencer);
+                texte.inputEnabled = true;
+                texte.events.onInputOver.add(over, this);
+                texte.events.onInputDown.add(down, this);
+                state = 3;
+            }
+            
+            /*Test Quit
+            function exit() {
+                //navigator.app.exitApp();
+                window.BrowserApp.quit();
+            }*/
+        };
+
+    </script>
+</body>
+
+</html>
