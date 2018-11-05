@@ -28,6 +28,7 @@
                 game.load.spritesheet('bouteilles', 'bouteillesInk.png', 13, 32, 2);
                 game.load.image('gameover', 'GameOverFR.png');
                 game.load.image('win', 'WinFR.png');
+                
                 //animation
                 game.load.spritesheet('poissons', 'poissonAnimInk.png', 19, 43, 2);
                 game.load.spritesheet('tortue', 'tortueAnimInk.png', 82.3, 90, 2);
@@ -41,7 +42,7 @@
             function create() {
                 game.scale.pageAlignHorizontally = true;
                 game.add.sprite(0, 0, 'bg');
-                game.world.setBounds(0, 0, 1200, 800);
+                
                 state = 0;
                 play = {
                     font: "bold 36px Arial",
@@ -121,6 +122,7 @@
                 player.enableBody = true;
                 game.physics.arcade.enable(player);
                 game.physics.setBoundsToWorld();
+                game.world.setBounds(0, 0, 1200, 800);
 
 
                 sacs = game.add.group();
