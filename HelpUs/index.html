@@ -28,7 +28,7 @@
                 game.load.spritesheet('bouteilles', 'bouteillesInk.png', 13, 32, 2);
                 game.load.image('gameover', 'GameOverFR.png');
                 game.load.image('win', 'WinFR.png');
-                
+
                 //animation
                 game.load.spritesheet('poissons', 'poissonAnimInk.png', 19, 43, 2);
                 game.load.spritesheet('tortue', 'tortueAnimInk.png', 82.3, 90, 2);
@@ -40,9 +40,10 @@
             }
 
             function create() {
+                
                 game.scale.pageAlignHorizontally = true;
                 game.add.sprite(0, 0, 'bg');
-                
+
                 state = 0;
                 play = {
                     font: "bold 36px Arial",
@@ -118,12 +119,15 @@
 
                 ecranJeu = game.add.tileSprite(0, 0, 1200, 800, 'fond'); //game.add.sprite(0, 0, 'fond');         
 
+                //game.physics.setBoundsToWorld();
+                game.world.setBounds(0, 0, 1200, 800);
+
+
                 player = game.add.sprite(650, 650, 'player');
                 player.enableBody = true;
                 game.physics.arcade.enable(player);
-                game.physics.setBoundsToWorld();
-                game.world.setBounds(0, 0, 1200, 800);
-
+                
+                player.body.collideWorldBounds = true;
 
                 sacs = game.add.group();
                 sacs.enableBody = true; //enable body, activer le corps 
@@ -229,18 +233,18 @@
                 boutonJouer.fill = "#0ac6ff";
             }
 
-            
+
             function out(texte) {
                 boutonJouer.fill = "#0076ff";
-            } 
-            
-            
+            }
+
+
             function down() {
                 createGame();
                 state = 1;
             }
-            
-            
+
+
             /*Test Exit
             function outQuit(texte) {
                 boutonQuitter.fill = "#0076ff";
@@ -275,7 +279,7 @@
                 boutonJouer.events.onInputOut.add(out, this);
                 boutonJouer.events.onInputDown.add(down, this);
                 state = 2;
-                
+
                 /*Test Quit
                 quitter = {
                     font: "bold 24px Arial",
@@ -313,7 +317,7 @@
                 texte.events.onInputDown.add(down, this);
                 state = 3;
             }
-            
+
             /*Test Quit
             function exit() {
                 //navigator.app.exitApp();
